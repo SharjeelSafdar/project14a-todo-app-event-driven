@@ -1,5 +1,6 @@
 import * as cdk from "@aws-cdk/core";
 import * as cognito from "@aws-cdk/aws-cognito";
+import * as appsync from "@aws-cdk/aws-appsync";
 import * as ddb from "@aws-cdk/aws-dynamodb";
 
 export class ServicesStack extends cdk.Stack {
@@ -70,6 +71,22 @@ export class ServicesStack extends cdk.Stack {
     //     domainPrefix: "todo-app-p14a",
     //   },
     // });
+
+    /* *************************************************** */
+    /* *************** AppSync GraphQL API *************** */
+    /* *************************************************** */
+    const gqlApi = new appsync.GraphqlApi(this, "P14aGraphQlApi", {
+      name: "P14a-GraphQL-Api",
+      schema: appsync.Schema.fromAsset("utils/graphql/schema.gql"),
+      authorizationConfig: {
+        defaultAuthorization: {
+          authorizationType: appsync.AuthorizationType.USER_POOL,
+          userPoolConfig: {
+            userPool,
+          },
+        },
+      },
+    });
 
     cdk.Tags.of(this).add("Project", "P14a-Todo-App-event-driven");
   }
