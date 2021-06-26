@@ -22,11 +22,9 @@ export const editTodoContent = async (
         ":usernameInArgs": username,
       },
     };
-    const res = await ddbClient.update(params).promise();
-    console.log("Updated Todo: ", JSON.stringify(res, null, 2));
-    return res;
+    await ddbClient.update(params).promise();
+    console.log("Todo Updated");
   } catch (error) {
     console.log("Error updating todo: ", error);
-    return {};
   }
 };

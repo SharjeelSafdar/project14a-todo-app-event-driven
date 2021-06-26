@@ -5,8 +5,7 @@ import * as ddb from "@aws-cdk/aws-dynamodb";
 import * as events from "@aws-cdk/aws-events";
 import * as eventTargets from "@aws-cdk/aws-events-targets";
 import * as lambda from "@aws-cdk/aws-lambda";
-import * as stepFunctions from "@aws-cdk/aws-stepfunctions";
-import * as stepFunctionTasks from "@aws-cdk/aws-stepfunctions-tasks";
+import * as lambdaEventSource from "@aws-cdk/aws-lambda-event-sources";
 
 import {
   EVENT_SOURCE,
@@ -28,6 +27,7 @@ export class ServicesStack extends cdk.Stack {
         name: "id",
         type: ddb.AttributeType.STRING,
       },
+      stream: ddb.StreamViewType.NEW_AND_OLD_IMAGES,
       billingMode: ddb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
@@ -201,9 +201,9 @@ export class ServicesStack extends cdk.Stack {
       ),
     });
 
-    /* *************************************************************** */
-    /* ********** StateMachine to Be Invoked By EventBridge ********** */
-    /* *************************************************************** */
+    /* ****************************************************************** */
+    /* ********** Lambda Function to Be Invoked By EventBridge ********** */
+    /* ****************************************************************** */
     const ddbLambda = new lambda.Function(this, "P14aDdbLambda", {
       functionName: "P14a-Ddb-Lambda",
       runtime: lambda.Runtime.NODEJS_14_X,
@@ -216,47 +216,6 @@ export class ServicesStack extends cdk.Stack {
     });
     todosTable.grantReadWriteData(ddbLambda);
 
-    const gqlLambda = new lambda.Function(this, "P14aGqlLambda", {
-      functionName: "P14a-GQL-Lambda",
-      runtime: lambda.Runtime.NODEJS_14_X,
-      code: lambda.Code.fromAsset("utils/lambda/gqlLambda"),
-      handler: "index.handler",
-      environment: {
-        APPSYNC_GRAPHQL_API_ENDPOINT: gqlApi.graphqlUrl,
-        STACK_REGION: this.region,
-      },
-    });
-    gqlApi.grantMutation(gqlLambda);
-
-    const ddbStep = new stepFunctionTasks.LambdaInvoke(this, "P14aDdbStep", {
-      lambdaFunction: ddbLambda,
-      comment:
-        "Puts/updates/deletes an item in DynamoDB " +
-        "table according to the AppSync mutation field.",
-    });
-
-    const gqlStep = new stepFunctionTasks.LambdaInvoke(this, "P14aGqlStep", {
-      lambdaFunction: gqlLambda,
-      comment:
-        "Calls an AppSync mutation to return the " +
-        "newly added/updated/deleted item to the client.",
-    });
-
-    const stateMachineDefinition =
-      stepFunctions.Chain.start(ddbStep).next(gqlStep);
-
-    const stateMachine = new stepFunctions.StateMachine(
-      this,
-      "P14aStateMachine",
-      {
-        definition: stateMachineDefinition,
-        stateMachineName: "Process-AppSync-Mutation",
-      }
-    );
-
-    /* ****************************************************************** */
-    /* ********** EventBridge Rule to Invoke the State Machine ********** */
-    /* ****************************************************************** */
     new events.Rule(this, "P14aEventRule", {
       description:
         "Rule to invoke state machine when a mutation is run in AppSync",
@@ -269,8 +228,29 @@ export class ServicesStack extends cdk.Stack {
           Mutations.DELETE_TODO,
         ],
       },
-      targets: [new eventTargets.SfnStateMachine(stateMachine)],
+      targets: [new eventTargets.LambdaFunction(ddbLambda)],
     });
+
+    /* ****************************************************************** */
+    /* ********** EventBridge Rule to Invoke the State Machine ********** */
+    /* ****************************************************************** */
+    const gqlLambda = new lambda.Function(this, "P14aGqlLambda", {
+      functionName: "P14a-GQL-Lambda",
+      runtime: lambda.Runtime.NODEJS_14_X,
+      code: lambda.Code.fromAsset("utils/lambda/gqlLambda"),
+      handler: "index.handler",
+      environment: {
+        APPSYNC_GRAPHQL_API_ENDPOINT: gqlApi.graphqlUrl,
+        STACK_REGION: this.region,
+      },
+    });
+    gqlApi.grantMutation(gqlLambda);
+    gqlLambda.addEventSource(
+      new lambdaEventSource.DynamoEventSource(todosTable, {
+        startingPosition: lambda.StartingPosition.LATEST,
+        batchSize: 1,
+      })
+    );
 
     cdk.Tags.of(this).add("Project", "P14a-Todo-App-event-driven");
   }

@@ -18,11 +18,9 @@ export const deleteTodo = async (
         ":usernameInArgs": username,
       },
     };
-    const res = await ddbClient.delete(params).promise();
-    console.log("Deleted Todo: ", JSON.stringify(res, null, 2));
-    return res;
+    await ddbClient.delete(params).promise();
+    console.log("Todo Deleted");
   } catch (error) {
     console.log("Error deleting todo: ", error);
-    return {};
   }
 };

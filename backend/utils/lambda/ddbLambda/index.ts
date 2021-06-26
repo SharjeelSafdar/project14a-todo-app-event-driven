@@ -24,7 +24,7 @@ export const handler = async (event: EventType) => {
 
   switch (mutationType) {
     case Mutations.CREATE_TODO: {
-      return await createTodo(
+      await createTodo(
         ddbClient,
         TODOS_TABLE_NAME,
         event.detail.username,
@@ -32,7 +32,7 @@ export const handler = async (event: EventType) => {
       );
     }
     case Mutations.EDIT_TODO_CONTENT: {
-      return await editTodoContent(
+      await editTodoContent(
         ddbClient,
         TODOS_TABLE_NAME,
         event.detail.id,
@@ -41,7 +41,7 @@ export const handler = async (event: EventType) => {
       );
     }
     case Mutations.TOGGLE_TODO_STATUS: {
-      return await toggleTodoStatus(
+      await toggleTodoStatus(
         ddbClient,
         TODOS_TABLE_NAME,
         event.detail.id,
@@ -50,7 +50,7 @@ export const handler = async (event: EventType) => {
       );
     }
     case Mutations.DELETE_TODO: {
-      return await deleteTodo(
+      await deleteTodo(
         ddbClient,
         TODOS_TABLE_NAME,
         event.detail.id,
@@ -58,7 +58,6 @@ export const handler = async (event: EventType) => {
       );
     }
     default: {
-      return {};
     }
   }
 };

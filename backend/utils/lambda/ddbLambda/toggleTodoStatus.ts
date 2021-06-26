@@ -22,11 +22,9 @@ export const toggleTodoStatus = async (
         ":usernameInArgs": username,
       },
     };
-    const res = await ddbClient.update(params).promise();
-    console.log("Toggled Todo: ", JSON.stringify(res, null, 2));
-    return res;
+    await ddbClient.update(params).promise();
+    console.log("Todo Status Toggled");
   } catch (error) {
     console.log("Error toggling todo status: ", error);
-    return {};
   }
 };
