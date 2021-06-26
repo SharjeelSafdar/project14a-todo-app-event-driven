@@ -88,6 +88,34 @@ export class ServicesStack extends cdk.Stack {
       },
     });
 
+    /* ********************************************************** */
+    /* *************** GraphQL API Query Resolver *************** */
+    /* ********************************************************** */
+    const ddbDataSource = gqlApi.addDynamoDbDataSource(
+      "DdbDataSource",
+      todosTable
+    );
+    todosTable.grantReadWriteData(ddbDataSource);
+
+    ddbDataSource.createResolver({
+      typeName: "Query",
+      fieldName: "todos",
+      requestMappingTemplate: appsync.MappingTemplate.fromString(`
+        {
+          "version" : "2017-02-28",
+          "operation" : "Query",
+          "index" : "username-index",
+          "query" : {
+            "expression": "username = :username",
+            "expressionValues" : {
+              ":username" : $util.dynamodb.toDynamoDBJson($ctx.identity.username)
+            }
+          }
+        }
+      `),
+      responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultList(),
+    });
+
     cdk.Tags.of(this).add("Project", "P14a-Todo-App-event-driven");
   }
 }
