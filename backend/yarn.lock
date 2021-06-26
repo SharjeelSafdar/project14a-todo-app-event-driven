@@ -489,6 +489,27 @@
     "@aws-cdk/cx-api" "1.110.0"
     constructs "^3.3.69"
 
+"@aws-cdk/aws-lambda-event-sources@^1.110.0":
+  version "1.110.0"
+  resolved "https://registry.yarnpkg.com/@aws-cdk/aws-lambda-event-sources/-/aws-lambda-event-sources-1.110.0.tgz#c30a32fe895921604cff7ba1aeb0eb72e09349a6"
+  integrity sha512-86cdBjGzs2IGfLf59u0ImeHKTG3gyeDPkk8dQ4BbZdw4nAjDVU79H6YNxbstXsho9wn+RWDiODZOJhHskTRQWQ==
+  dependencies:
+    "@aws-cdk/aws-apigateway" "1.110.0"
+    "@aws-cdk/aws-dynamodb" "1.110.0"
+    "@aws-cdk/aws-ec2" "1.110.0"
+    "@aws-cdk/aws-events" "1.110.0"
+    "@aws-cdk/aws-iam" "1.110.0"
+    "@aws-cdk/aws-kinesis" "1.110.0"
+    "@aws-cdk/aws-lambda" "1.110.0"
+    "@aws-cdk/aws-s3" "1.110.0"
+    "@aws-cdk/aws-s3-notifications" "1.110.0"
+    "@aws-cdk/aws-secretsmanager" "1.110.0"
+    "@aws-cdk/aws-sns" "1.110.0"
+    "@aws-cdk/aws-sns-subscriptions" "1.110.0"
+    "@aws-cdk/aws-sqs" "1.110.0"
+    "@aws-cdk/core" "1.110.0"
+    constructs "^3.3.69"
+
 "@aws-cdk/aws-lambda@1.110.0", "@aws-cdk/aws-lambda@^1.110.0":
   version "1.110.0"
   resolved "https://registry.yarnpkg.com/@aws-cdk/aws-lambda/-/aws-lambda-1.110.0.tgz#5d20c90ccfa17ba10d405e853123b2fc41496c54"
@@ -585,6 +606,19 @@
     "@aws-cdk/aws-s3" "1.110.0"
     "@aws-cdk/core" "1.110.0"
     "@aws-cdk/cx-api" "1.110.0"
+    constructs "^3.3.69"
+
+"@aws-cdk/aws-s3-notifications@1.110.0":
+  version "1.110.0"
+  resolved "https://registry.yarnpkg.com/@aws-cdk/aws-s3-notifications/-/aws-s3-notifications-1.110.0.tgz#6d6a8c01c40ae7c005d66c0a3e3a026a49e910ec"
+  integrity sha512-URF5v6Kz51da2vqQRA4++F/IvH0A8050B9sEooLFUXJtXSY5+44Ts5GgzHET9a1lkBPlB7iqOAEMoNGUhgmh1w==
+  dependencies:
+    "@aws-cdk/aws-iam" "1.110.0"
+    "@aws-cdk/aws-lambda" "1.110.0"
+    "@aws-cdk/aws-s3" "1.110.0"
+    "@aws-cdk/aws-sns" "1.110.0"
+    "@aws-cdk/aws-sqs" "1.110.0"
+    "@aws-cdk/core" "1.110.0"
     constructs "^3.3.69"
 
 "@aws-cdk/aws-s3@1.110.0", "@aws-cdk/aws-s3@^1.110.0":
