@@ -30,6 +30,7 @@ export const handler = async (event: EventType) => {
         event.detail.username,
         event.detail.content
       );
+      break;
     }
     case Mutations.EDIT_TODO_CONTENT: {
       await editTodoContent(
@@ -39,6 +40,7 @@ export const handler = async (event: EventType) => {
         event.detail.username,
         event.detail.newContent
       );
+      break;
     }
     case Mutations.TOGGLE_TODO_STATUS: {
       await toggleTodoStatus(
@@ -48,6 +50,7 @@ export const handler = async (event: EventType) => {
         event.detail.username,
         event.detail.newStatus
       );
+      break;
     }
     case Mutations.DELETE_TODO: {
       await deleteTodo(
@@ -56,8 +59,10 @@ export const handler = async (event: EventType) => {
         event.detail.id,
         event.detail.username
       );
+      break;
     }
     default: {
+      break;
     }
   }
 };
