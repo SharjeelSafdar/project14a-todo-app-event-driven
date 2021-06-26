@@ -32,8 +32,6 @@
     "@aws-cdk/aws-lambda": "^1.110.0",
     "@aws-cdk/aws-lambda-event-sources": "^1.110.0",
     "@aws-cdk/aws-s3": "^1.110.0",
-    "@aws-cdk/aws-stepfunctions": "^1.110.0",
-    "@aws-cdk/aws-stepfunctions-tasks": "^1.110.0",
     "@aws-cdk/core": "1.110.0",
     "@types/aws-lambda": "^8.10.77",
     "aws-sdk": "^2.935.0",
