@@ -1,0 +1,15 @@
+projects:
+  P14a-GraphQL-Api:
+    schemaPath: src/graphql/schema.json
+    includes:
+      - src/graphql/**/*.ts
+    excludes:
+      - ./amplify/**
+    extensions:
+      amplify:
+        codeGenTarget: typescript
+        generatedFileName: src/graphql/api.ts
+        docsFilePath: src/graphql
+        region: us-east-2
+        apiId: c7clzp2tpvhtzl5ziooepiwooi
+        maxDepth: 2

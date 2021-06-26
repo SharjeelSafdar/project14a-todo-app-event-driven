@@ -1,0 +1,11 @@
+{
+  "auth": {
+    "p14atodoappevent795cfc74": {
+      "service": "Cognito",
+      "serviceType": "imported",
+      "providerPlugin": "awscloudformation",
+      "dependsOn": [],
+      "customAuth": false
+    }
+  }
+}
