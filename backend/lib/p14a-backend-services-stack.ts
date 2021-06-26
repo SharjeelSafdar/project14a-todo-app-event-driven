@@ -5,12 +5,15 @@ import * as ddb from "@aws-cdk/aws-dynamodb";
 import * as events from "@aws-cdk/aws-events";
 import * as eventTargets from "@aws-cdk/aws-events-targets";
 import * as lambda from "@aws-cdk/aws-lambda";
+import * as stepFunctions from "@aws-cdk/aws-stepfunctions";
+import * as stepFunctionTasks from "@aws-cdk/aws-stepfunctions-tasks";
 
 import {
   EVENT_SOURCE,
   requestTemplate,
   responseTemplate,
 } from "../utils/vtlTemplates";
+import { Mutations } from "../utils/types";
 
 export class ServicesStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -148,19 +151,13 @@ export class ServicesStack extends cdk.Stack {
       }
     );
     events.EventBus.grantAllPutEvents(httpEventBridgeDS);
-    enum mutations {
-      CREATE_TODO = "createTodo",
-      EDIT_TODO_CONTENT = "editTodoContent",
-      TOGGLE_TODO_STATUS = "toggleTodoStatus",
-      DELETE_TODO = "deleteTodo",
-    }
 
     const createTodoData = `\\\"content\\\": \\\"$ctx.args.content\\\", \\\"username\\\": \\\"$ctx.identity.username\\\"`;
     httpEventBridgeDS.createResolver({
       typeName: "Mutation",
-      fieldName: mutations.CREATE_TODO,
+      fieldName: Mutations.CREATE_TODO,
       requestMappingTemplate: appsync.MappingTemplate.fromString(
-        requestTemplate(createTodoData, mutations.CREATE_TODO)
+        requestTemplate(createTodoData, Mutations.CREATE_TODO)
       ),
       responseMappingTemplate: appsync.MappingTemplate.fromString(
         responseTemplate()
@@ -170,9 +167,9 @@ export class ServicesStack extends cdk.Stack {
     const editTodoData = `\\\"id\\\": \\\"$ctx.args.id\\\", \\\"newContent\\\": \\\"$ctx.args.newContent\\\", \\\"username\\\": \\\"$ctx.identity.username\\\"`;
     httpEventBridgeDS.createResolver({
       typeName: "Mutation",
-      fieldName: mutations.EDIT_TODO_CONTENT,
+      fieldName: Mutations.EDIT_TODO_CONTENT,
       requestMappingTemplate: appsync.MappingTemplate.fromString(
-        requestTemplate(editTodoData, mutations.EDIT_TODO_CONTENT)
+        requestTemplate(editTodoData, Mutations.EDIT_TODO_CONTENT)
       ),
       responseMappingTemplate: appsync.MappingTemplate.fromString(
         responseTemplate()
@@ -182,9 +179,9 @@ export class ServicesStack extends cdk.Stack {
     const toggleTodoData = `\\\"id\\\": \\\"$ctx.args.id\\\", \\\"newStatus\\\": \\\"$ctx.args.newStatus\\\", \\\"username\\\": \\\"$ctx.identity.username\\\"`;
     httpEventBridgeDS.createResolver({
       typeName: "Mutation",
-      fieldName: mutations.TOGGLE_TODO_STATUS,
+      fieldName: Mutations.TOGGLE_TODO_STATUS,
       requestMappingTemplate: appsync.MappingTemplate.fromString(
-        requestTemplate(toggleTodoData, mutations.TOGGLE_TODO_STATUS)
+        requestTemplate(toggleTodoData, Mutations.TOGGLE_TODO_STATUS)
       ),
       responseMappingTemplate: appsync.MappingTemplate.fromString(
         responseTemplate()
@@ -194,9 +191,9 @@ export class ServicesStack extends cdk.Stack {
     const deleteTodoData = `\\\"id\\\": \\\"$ctx.args.id\\\", \\\"username\\\": \\\"$ctx.identity.username\\\"`;
     httpEventBridgeDS.createResolver({
       typeName: "Mutation",
-      fieldName: mutations.DELETE_TODO,
+      fieldName: Mutations.DELETE_TODO,
       requestMappingTemplate: appsync.MappingTemplate.fromString(
-        requestTemplate(deleteTodoData, mutations.DELETE_TODO)
+        requestTemplate(deleteTodoData, Mutations.DELETE_TODO)
       ),
       responseMappingTemplate: appsync.MappingTemplate.fromString(
         responseTemplate()
@@ -213,10 +210,48 @@ export class ServicesStack extends cdk.Stack {
       handler: "index.handler",
       environment: {
         TODOS_TABLE_NAME: todosTable.tableName,
-        TODOS_TABLE_REGION: this.region,
+        STACK_REGION: this.region,
       },
     });
     todosTable.grantReadWriteData(ddbLambda);
+
+    const gqlLambda = new lambda.Function(this, "P14aGqlLambda", {
+      functionName: "P14a-GQL-Lambda",
+      runtime: lambda.Runtime.NODEJS_14_X,
+      code: lambda.Code.fromAsset("utils/lambda/gqlLambda"),
+      handler: "index.handler",
+      environment: {
+        APPSYNC_GRAPHQL_API_ENDPOINT: gqlApi.graphqlUrl,
+        STACK_REGION: this.region,
+      },
+    });
+    gqlApi.grantMutation(gqlLambda);
+
+    const ddbStep = new stepFunctionTasks.LambdaInvoke(this, "P14aDdbStep", {
+      lambdaFunction: ddbLambda,
+      comment:
+        "Puts/updates/deletes an item in DynamoDB " +
+        "table according to the AppSync mutation field.",
+    });
+
+    const gqlStep = new stepFunctionTasks.LambdaInvoke(this, "P14aGqlStep", {
+      lambdaFunction: gqlLambda,
+      comment:
+        "Calls an AppSync mutation to return the " +
+        "newly added/updated/deleted item to the client.",
+    });
+
+    const stateMachineDefinition =
+      stepFunctions.Chain.start(ddbStep).next(gqlStep);
+
+    const stateMachine = new stepFunctions.StateMachine(
+      this,
+      "P14aStateMachine",
+      {
+        definition: stateMachineDefinition,
+        stateMachineName: "Process-AppSync-Mutation",
+      }
+    );
 
     /* ****************************************************************** */
     /* ********** EventBridge Rule to Invoke the State Machine ********** */
@@ -227,13 +262,13 @@ export class ServicesStack extends cdk.Stack {
       eventPattern: {
         source: [EVENT_SOURCE],
         detailType: [
-          mutations.CREATE_TODO,
-          mutations.EDIT_TODO_CONTENT,
-          mutations.TOGGLE_TODO_STATUS,
-          mutations.DELETE_TODO,
+          Mutations.CREATE_TODO,
+          Mutations.EDIT_TODO_CONTENT,
+          Mutations.TOGGLE_TODO_STATUS,
+          Mutations.DELETE_TODO,
         ],
       },
-      targets: [new eventTargets.LambdaFunction(ddbLambda)],
+      targets: [new eventTargets.SfnStateMachine(stateMachine)],
     });
 
     cdk.Tags.of(this).add("Project", "P14a-Todo-App-event-driven");
