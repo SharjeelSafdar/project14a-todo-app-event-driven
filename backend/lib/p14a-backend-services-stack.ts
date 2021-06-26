@@ -1,4 +1,5 @@
 import * as cdk from "@aws-cdk/core";
+import * as cognito from "@aws-cdk/aws-cognito";
 import * as ddb from "@aws-cdk/aws-dynamodb";
 
 export class ServicesStack extends cdk.Stack {
@@ -24,6 +25,51 @@ export class ServicesStack extends cdk.Stack {
       },
       projectionType: ddb.ProjectionType.ALL,
     });
+
+    /* ************************************************ */
+    /* *************** Cognito UserPool *************** */
+    /* ************************************************ */
+    const userPool = new cognito.UserPool(this, "P14aUserPool", {
+      removalPolicy: cdk.RemovalPolicy.DESTROY,
+      selfSignUpEnabled: true,
+      signInAliases: {
+        email: true,
+        username: true,
+      },
+      signInCaseSensitive: true,
+      passwordPolicy: {
+        minLength: 8,
+        requireDigits: true,
+        requireLowercase: true,
+        requireUppercase: true,
+      },
+      autoVerify: {
+        email: true,
+      },
+      userVerification: {
+        emailStyle: cognito.VerificationEmailStyle.LINK,
+      },
+      accountRecovery: cognito.AccountRecovery.EMAIL_ONLY,
+      standardAttributes: {
+        email: {
+          required: true,
+          mutable: false,
+        },
+      },
+    });
+
+    // const userPoolClient =
+    userPool.addClient("P14aUserPoolClient", {
+      authFlows: {
+        userPassword: true,
+      },
+    });
+
+    // const domain = userPool.addDomain("P14aUserPoolDomain", {
+    //   cognitoDomain: {
+    //     domainPrefix: "todo-app-p14a",
+    //   },
+    // });
 
     cdk.Tags.of(this).add("Project", "P14a-Todo-App-event-driven");
   }
