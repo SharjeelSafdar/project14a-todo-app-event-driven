@@ -68,18 +68,25 @@ export class ServicesStack extends cdk.Stack {
       },
     });
 
-    // const userPoolClient =
-    userPool.addClient("P14aUserPoolClient", {
+    const userPoolClient = userPool.addClient("P14aUserPoolClient", {
       authFlows: {
         userPassword: true,
       },
     });
 
-    // const domain = userPool.addDomain("P14aUserPoolDomain", {
-    //   cognitoDomain: {
-    //     domainPrefix: "todo-app-p14a",
-    //   },
-    // });
+    new cdk.CfnOutput(this, "P14aUserPoolClientId", {
+      value: userPoolClient.userPoolClientId,
+    });
+
+    const userPoolDomain = userPool.addDomain("P14aUserPoolDomain", {
+      cognitoDomain: {
+        domainPrefix: "todo-app-p14a",
+      },
+    });
+
+    new cdk.CfnOutput(this, "P14aUserPoolDomain", {
+      value: userPoolDomain.domainName,
+    });
 
     /* *************************************************** */
     /* *************** AppSync GraphQL API *************** */
