@@ -1,7 +1,6 @@
 import * as AWS from "aws-sdk";
 
-import { EventType } from "./types";
-import { Mutations } from "../../types";
+import { EventType, Mutations } from "./types";
 import { createTodo } from "./createTodo";
 import { editTodoContent } from "./editTodoContent";
 import { toggleTodoStatus } from "./toggleTodoStatus";
