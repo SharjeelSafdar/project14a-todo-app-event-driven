@@ -3,6 +3,8 @@ import * as cognito from "@aws-cdk/aws-cognito";
 import * as appsync from "@aws-cdk/aws-appsync";
 import * as ddb from "@aws-cdk/aws-dynamodb";
 import * as events from "@aws-cdk/aws-events";
+import * as eventTargets from "@aws-cdk/aws-events-targets";
+import * as lambda from "@aws-cdk/aws-lambda";
 
 import {
   EVENT_SOURCE,
@@ -192,6 +194,39 @@ export class ServicesStack extends cdk.Stack {
       responseMappingTemplate: appsync.MappingTemplate.fromString(
         responseTemplate()
       ),
+    });
+
+    /* *************************************************************** */
+    /* ********** StateMachine to Be Invoked By EventBridge ********** */
+    /* *************************************************************** */
+    const ddbLambda = new lambda.Function(this, "P14aDdbLambda", {
+      functionName: "P14a-Ddb-Lambda",
+      runtime: lambda.Runtime.NODEJS_14_X,
+      code: lambda.Code.fromAsset("utils/lambda/ddbLambda"),
+      handler: "index.handler",
+      environment: {
+        TODOS_TABLE_NAME: todosTable.tableName,
+        TODOS_TABLE_REGION: this.region,
+      },
+    });
+    todosTable.grantReadWriteData(ddbLambda);
+
+    /* ****************************************************************** */
+    /* ********** EventBridge Rule to Invoke the State Machine ********** */
+    /* ****************************************************************** */
+    new events.Rule(this, "P14aEventRule", {
+      description:
+        "Rule to invoke state machine when a mutation is run in AppSync",
+      eventPattern: {
+        source: [EVENT_SOURCE],
+        detailType: [
+          mutations.CREATE_TODO,
+          mutations.EDIT_TODO_CONTENT,
+          mutations.TOGGLE_TODO_STATUS,
+          mutations.DELETE_TODO,
+        ],
+      },
+      targets: [new eventTargets.LambdaFunction(ddbLambda)],
     });
 
     cdk.Tags.of(this).add("Project", "P14a-Todo-App-event-driven");
