@@ -2,6 +2,13 @@ import * as cdk from "@aws-cdk/core";
 import * as cognito from "@aws-cdk/aws-cognito";
 import * as appsync from "@aws-cdk/aws-appsync";
 import * as ddb from "@aws-cdk/aws-dynamodb";
+import * as events from "@aws-cdk/aws-events";
+
+import {
+  EVENT_SOURCE,
+  requestTemplate,
+  responseTemplate,
+} from "../utils/vtlTemplates";
 
 export class ServicesStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -114,6 +121,77 @@ export class ServicesStack extends cdk.Stack {
         }
       `),
       responseMappingTemplate: appsync.MappingTemplate.dynamoDbResultList(),
+    });
+
+    /* ************************************************************** */
+    /* *************** GraphQL API Mutation Resolvers *************** */
+    /* ************************************************************** */
+    const httpEventBridgeDS = gqlApi.addHttpDataSource(
+      "HttpEventBridgeDS",
+      `https://events.${this.region}.amazonaws.com/`, // This is the ENDPOINT for eventbridge.
+      {
+        name: "p14aHttpEventBridgeDS",
+        description: "Sending events to EventBridge on AppSync mutations",
+        authorizationConfig: {
+          signingRegion: this.region,
+          signingServiceName: "events",
+        },
+      }
+    );
+    events.EventBus.grantAllPutEvents(httpEventBridgeDS);
+    enum mutations {
+      CREATE_TODO = "createTodo",
+      EDIT_TODO_CONTENT = "editTodoContent",
+      TOGGLE_TODO_STATUS = "toggleTodoStatus",
+      DELETE_TODO = "deleteTodo",
+    }
+
+    const createTodoData = `\\\"content\\\": \\\"$ctx.args.content\\\", \\\"username\\\": \\\"$ctx.identity.username\\\"`;
+    httpEventBridgeDS.createResolver({
+      typeName: "Mutation",
+      fieldName: mutations.CREATE_TODO,
+      requestMappingTemplate: appsync.MappingTemplate.fromString(
+        requestTemplate(createTodoData, mutations.CREATE_TODO)
+      ),
+      responseMappingTemplate: appsync.MappingTemplate.fromString(
+        responseTemplate()
+      ),
+    });
+
+    const editTodoData = `\\\"id\\\": \\\"$ctx.args.id\\\", \\\"newContent\\\": \\\"$ctx.args.newContent\\\", \\\"username\\\": \\\"$ctx.identity.username\\\"`;
+    httpEventBridgeDS.createResolver({
+      typeName: "Mutation",
+      fieldName: mutations.EDIT_TODO_CONTENT,
+      requestMappingTemplate: appsync.MappingTemplate.fromString(
+        requestTemplate(editTodoData, mutations.EDIT_TODO_CONTENT)
+      ),
+      responseMappingTemplate: appsync.MappingTemplate.fromString(
+        responseTemplate()
+      ),
+    });
+
+    const toggleTodoData = `\\\"id\\\": \\\"$ctx.args.id\\\", \\\"newStatus\\\": \\\"$ctx.args.newStatus\\\", \\\"username\\\": \\\"$ctx.identity.username\\\"`;
+    httpEventBridgeDS.createResolver({
+      typeName: "Mutation",
+      fieldName: mutations.TOGGLE_TODO_STATUS,
+      requestMappingTemplate: appsync.MappingTemplate.fromString(
+        requestTemplate(toggleTodoData, mutations.TOGGLE_TODO_STATUS)
+      ),
+      responseMappingTemplate: appsync.MappingTemplate.fromString(
+        responseTemplate()
+      ),
+    });
+
+    const deleteTodoData = `\\\"id\\\": \\\"$ctx.args.id\\\", \\\"username\\\": \\\"$ctx.identity.username\\\"`;
+    httpEventBridgeDS.createResolver({
+      typeName: "Mutation",
+      fieldName: mutations.DELETE_TODO,
+      requestMappingTemplate: appsync.MappingTemplate.fromString(
+        requestTemplate(deleteTodoData, mutations.DELETE_TODO)
+      ),
+      responseMappingTemplate: appsync.MappingTemplate.fromString(
+        responseTemplate()
+      ),
     });
 
     cdk.Tags.of(this).add("Project", "P14a-Todo-App-event-driven");
