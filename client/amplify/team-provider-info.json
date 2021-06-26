@@ -10,6 +10,16 @@
       "StackName": "amplify-p14atodoappevent-dev-60212",
       "StackId": "arn:aws:cloudformation:us-east-2:731540390537:stack/amplify-p14atodoappevent-dev-60212/2826d760-d61a-11eb-a861-021611d0f3fe",
       "AmplifyAppId": "d2t7962lchtrwp"
+    },
+    "categories": {
+      "auth": {
+        "p14atodoappevent795cfc74": {
+          "userPoolId": "us-east-2_iKVaMHBIp",
+          "userPoolName": "P14aUserPoolC815831B-ZyAPGRzBXlw8",
+          "webClientId": "75s4itvc8vtmgvt6vr7vdv0j04",
+          "nativeClientId": "75s4itvc8vtmgvt6vr7vdv0j04"
+        }
+      }
     }
   }
 }
