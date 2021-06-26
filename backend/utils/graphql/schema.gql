@@ -4,6 +4,18 @@ type Todo {
   status: Boolean!
 }
 
+type MutationCompletedReturnType {
+  mutationType: String!
+  username: String!
+  todo: String!
+}
+
+input TodoInput {
+  id: ID!
+  content: String!
+  status: Boolean!
+}
+
 type Query {
   todos: [Todo!]!
 }
@@ -13,4 +25,14 @@ type Mutation {
   editTodoContent(id: ID!, newContent: String!): String!
   toggleTodoStatus(id: ID!, newStatus: Boolean!): String!
   deleteTodo(id: ID!): String!
+  mutationCompleted(
+    mutationType: String!
+    username: String!
+    todo: TodoInput!
+  ): MutationCompletedReturnType!
+}
+
+type Subscription {
+  onMutationCompleted(username: String): MutationCompletedReturnType
+    @aws_subscribe(mutations: ["mutationCompleted"])
 }
