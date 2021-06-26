@@ -23,6 +23,7 @@ export class ServicesStack extends cdk.Stack {
     /* *************** DynamoDB Table for Todos *************** */
     /* ******************************************************** */
     const todosTable = new ddb.Table(this, "P14aTodosTable", {
+      tableName: "P14aTodosTable",
       partitionKey: {
         name: "id",
         type: ddb.AttributeType.STRING,
