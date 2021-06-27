@@ -201,6 +201,28 @@ export class ServicesStack extends cdk.Stack {
       ),
     });
 
+    /* ************************************************************ */
+    /* *************** GraphQL API None Data Source *************** */
+    /* ************************************************************ */
+    const appsyncNoneDS = gqlApi.addNoneDataSource("P14aNoneDS", {
+      name: "P14aNoneDS",
+      description: "Does not save incoming data anywhere",
+    });
+
+    appsyncNoneDS.createResolver({
+      typeName: "Mutation",
+      fieldName: "mutationCompleted",
+      requestMappingTemplate: appsync.MappingTemplate.fromString(`
+        {
+          "version" : "2017-02-28",
+          "payload": $util.toJson($ctx.args)
+        }
+      `),
+      responseMappingTemplate: appsync.MappingTemplate.fromString(
+        "$util.toJson($context.result)"
+      ),
+    });
+
     /* ****************************************************************** */
     /* ********** Lambda Function to Be Invoked By EventBridge ********** */
     /* ****************************************************************** */
