@@ -24,6 +24,10 @@ const initiateAuth = async ({ clientId, username, password }) =>
     .promise();
 
 exports.handler = async (event, context, callback) => {
+  console.log(
+    `DynamoDB Stream Records = ${JSON.stringify(event.Records, null, 2)}`
+  );
+
   const clientId = process.env.COGNITO_USERPOOL_CLIENT_ID;
   const endPoint = process.env.APPSYNC_GRAPHQL_API_ENDPOINT;
   const username = "sharjeel";
@@ -60,6 +64,7 @@ exports.handler = async (event, context, callback) => {
         todo: getData(record),
       },
     };
+    console.log(`Post Body = ${JSON.stringify(postBody, null, 2)}`);
 
     const uri = await URL.parse(endPoint);
 
