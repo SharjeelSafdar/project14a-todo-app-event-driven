@@ -49,17 +49,17 @@ exports.getData = record => {
     return {
       id: record.dynamodb.NewImage.id.S,
       content: record.dynamodb.NewImage.content.S,
-      status:
-        record.dynamodb.NewImage.status.S === "true" ||
-        record.dynamodb.NewImage.status.BOOL,
+      status: !!record.dynamodb.NewImage.status.S
+        ? record.dynamodb.NewImage.status.S === "true"
+        : record.dynamodb.NewImage.status.BOOL,
     };
   } else if (record.dynamodb.OldImage) {
     return {
       id: record.dynamodb.OldImage.id.S,
       content: record.dynamodb.OldImage.content.S,
-      status:
-        record.dynamodb.OldImage.status.S === "true" ||
-        record.dynamodb.OldImage.status.BOOL,
+      status: !!record.dynamodb.OldImage.status.S
+        ? record.dynamodb.OldImage.status.S === "true"
+        : record.dynamodb.OldImage.status.BOOL,
     };
   }
 };
