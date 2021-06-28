@@ -4,13 +4,13 @@
 const awsmobile = {
   aws_project_region: "us-east-2",
   aws_appsync_graphqlEndpoint:
-    "https://eiv7nobryrbxdjopepts5dn5c4.appsync-api.us-east-2.amazonaws.com/graphql",
+    "https://xi4fjzp64ngnlcgjyocxqkzbxq.appsync-api.us-east-2.amazonaws.com/graphql",
   aws_appsync_region: "us-east-2",
   aws_appsync_authenticationType: "AMAZON_COGNITO_USER_POOLS",
   Auth: {
     region: "us-east-2",
-    userPoolId: "us-east-2_iKVaMHBIp",
-    userPoolWebClientId: "75s4itvc8vtmgvt6vr7vdv0j04",
+    userPoolId: "us-east-2_qexTVZfql",
+    userPoolWebClientId: "4uek83bbhscap8qi2tev7ldn8i",
     mandatorySignIn: true,
     authenticationFlowType: "USER_PASSWORD_AUTH",
   },

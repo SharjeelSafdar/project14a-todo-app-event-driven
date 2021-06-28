@@ -5,12 +5,14 @@ import * as ddb from "@aws-cdk/aws-dynamodb";
 import * as events from "@aws-cdk/aws-events";
 import * as eventTargets from "@aws-cdk/aws-events-targets";
 import * as lambda from "@aws-cdk/aws-lambda";
+import * as lambdaEventSource from "@aws-cdk/aws-lambda-event-sources";
 
 import {
   EVENT_SOURCE,
   requestTemplate,
   responseTemplate,
 } from "../utils/vtlTemplates";
+import { Mutations } from "../utils/types";
 
 export class ServicesStack extends cdk.Stack {
   constructor(scope: cdk.Construct, id: string, props?: cdk.StackProps) {
@@ -20,10 +22,12 @@ export class ServicesStack extends cdk.Stack {
     /* *************** DynamoDB Table for Todos *************** */
     /* ******************************************************** */
     const todosTable = new ddb.Table(this, "P14aTodosTable", {
+      tableName: "P14aTodosTable",
       partitionKey: {
         name: "id",
         type: ddb.AttributeType.STRING,
       },
+      stream: ddb.StreamViewType.NEW_AND_OLD_IMAGES,
       billingMode: ddb.BillingMode.PAY_PER_REQUEST,
       removalPolicy: cdk.RemovalPolicy.DESTROY,
     });
@@ -148,19 +152,13 @@ export class ServicesStack extends cdk.Stack {
       }
     );
     events.EventBus.grantAllPutEvents(httpEventBridgeDS);
-    enum mutations {
-      CREATE_TODO = "createTodo",
-      EDIT_TODO_CONTENT = "editTodoContent",
-      TOGGLE_TODO_STATUS = "toggleTodoStatus",
-      DELETE_TODO = "deleteTodo",
-    }
 
     const createTodoData = `\\\"content\\\": \\\"$ctx.args.content\\\", \\\"username\\\": \\\"$ctx.identity.username\\\"`;
     httpEventBridgeDS.createResolver({
       typeName: "Mutation",
-      fieldName: mutations.CREATE_TODO,
+      fieldName: Mutations.CREATE_TODO,
       requestMappingTemplate: appsync.MappingTemplate.fromString(
-        requestTemplate(createTodoData, mutations.CREATE_TODO)
+        requestTemplate(createTodoData, Mutations.CREATE_TODO)
       ),
       responseMappingTemplate: appsync.MappingTemplate.fromString(
         responseTemplate()
@@ -170,9 +168,9 @@ export class ServicesStack extends cdk.Stack {
     const editTodoData = `\\\"id\\\": \\\"$ctx.args.id\\\", \\\"newContent\\\": \\\"$ctx.args.newContent\\\", \\\"username\\\": \\\"$ctx.identity.username\\\"`;
     httpEventBridgeDS.createResolver({
       typeName: "Mutation",
-      fieldName: mutations.EDIT_TODO_CONTENT,
+      fieldName: Mutations.EDIT_TODO_CONTENT,
       requestMappingTemplate: appsync.MappingTemplate.fromString(
-        requestTemplate(editTodoData, mutations.EDIT_TODO_CONTENT)
+        requestTemplate(editTodoData, Mutations.EDIT_TODO_CONTENT)
       ),
       responseMappingTemplate: appsync.MappingTemplate.fromString(
         responseTemplate()
@@ -182,9 +180,9 @@ export class ServicesStack extends cdk.Stack {
     const toggleTodoData = `\\\"id\\\": \\\"$ctx.args.id\\\", \\\"newStatus\\\": \\\"$ctx.args.newStatus\\\", \\\"username\\\": \\\"$ctx.identity.username\\\"`;
     httpEventBridgeDS.createResolver({
       typeName: "Mutation",
-      fieldName: mutations.TOGGLE_TODO_STATUS,
+      fieldName: Mutations.TOGGLE_TODO_STATUS,
       requestMappingTemplate: appsync.MappingTemplate.fromString(
-        requestTemplate(toggleTodoData, mutations.TOGGLE_TODO_STATUS)
+        requestTemplate(toggleTodoData, Mutations.TOGGLE_TODO_STATUS)
       ),
       responseMappingTemplate: appsync.MappingTemplate.fromString(
         responseTemplate()
@@ -194,18 +192,40 @@ export class ServicesStack extends cdk.Stack {
     const deleteTodoData = `\\\"id\\\": \\\"$ctx.args.id\\\", \\\"username\\\": \\\"$ctx.identity.username\\\"`;
     httpEventBridgeDS.createResolver({
       typeName: "Mutation",
-      fieldName: mutations.DELETE_TODO,
+      fieldName: Mutations.DELETE_TODO,
       requestMappingTemplate: appsync.MappingTemplate.fromString(
-        requestTemplate(deleteTodoData, mutations.DELETE_TODO)
+        requestTemplate(deleteTodoData, Mutations.DELETE_TODO)
       ),
       responseMappingTemplate: appsync.MappingTemplate.fromString(
         responseTemplate()
       ),
     });
 
-    /* *************************************************************** */
-    /* ********** StateMachine to Be Invoked By EventBridge ********** */
-    /* *************************************************************** */
+    /* ************************************************************ */
+    /* *************** GraphQL API None Data Source *************** */
+    /* ************************************************************ */
+    const appsyncNoneDS = gqlApi.addNoneDataSource("P14aNoneDS", {
+      name: "P14aNoneDS",
+      description: "Does not save incoming data anywhere",
+    });
+
+    appsyncNoneDS.createResolver({
+      typeName: "Mutation",
+      fieldName: "mutationCompleted",
+      requestMappingTemplate: appsync.MappingTemplate.fromString(`
+        {
+          "version" : "2017-02-28",
+          "payload": $util.toJson($ctx.args)
+        }
+      `),
+      responseMappingTemplate: appsync.MappingTemplate.fromString(
+        "$util.toJson($context.result)"
+      ),
+    });
+
+    /* ****************************************************************** */
+    /* ********** Lambda Function to Be Invoked By EventBridge ********** */
+    /* ****************************************************************** */
     const ddbLambda = new lambda.Function(this, "P14aDdbLambda", {
       functionName: "P14a-Ddb-Lambda",
       runtime: lambda.Runtime.NODEJS_14_X,
@@ -213,28 +233,47 @@ export class ServicesStack extends cdk.Stack {
       handler: "index.handler",
       environment: {
         TODOS_TABLE_NAME: todosTable.tableName,
-        TODOS_TABLE_REGION: this.region,
+        STACK_REGION: this.region,
       },
     });
     todosTable.grantReadWriteData(ddbLambda);
 
-    /* ****************************************************************** */
-    /* ********** EventBridge Rule to Invoke the State Machine ********** */
-    /* ****************************************************************** */
     new events.Rule(this, "P14aEventRule", {
       description:
         "Rule to invoke state machine when a mutation is run in AppSync",
       eventPattern: {
         source: [EVENT_SOURCE],
         detailType: [
-          mutations.CREATE_TODO,
-          mutations.EDIT_TODO_CONTENT,
-          mutations.TOGGLE_TODO_STATUS,
-          mutations.DELETE_TODO,
+          Mutations.CREATE_TODO,
+          Mutations.EDIT_TODO_CONTENT,
+          Mutations.TOGGLE_TODO_STATUS,
+          Mutations.DELETE_TODO,
         ],
       },
       targets: [new eventTargets.LambdaFunction(ddbLambda)],
     });
+
+    /* ****************************************************************** */
+    /* ********** EventBridge Rule to Invoke the State Machine ********** */
+    /* ****************************************************************** */
+    const gqlLambda = new lambda.Function(this, "P14aGqlLambda", {
+      functionName: "P14a-GQL-Lambda",
+      runtime: lambda.Runtime.NODEJS_14_X,
+      code: lambda.Code.fromAsset("utils/lambda/gqlLambda"),
+      handler: "index.handler",
+      environment: {
+        APPSYNC_GRAPHQL_API_ENDPOINT: gqlApi.graphqlUrl,
+        COGNITO_USERPOOL_CLIENT_ID: userPoolClient.userPoolClientId,
+        STACK_REGION: this.region,
+      },
+    });
+    gqlApi.grantMutation(gqlLambda);
+    gqlLambda.addEventSource(
+      new lambdaEventSource.DynamoEventSource(todosTable, {
+        startingPosition: lambda.StartingPosition.LATEST,
+        batchSize: 1,
+      })
+    );
 
     cdk.Tags.of(this).add("Project", "P14a-Todo-App-event-driven");
   }
