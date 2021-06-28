@@ -263,6 +263,7 @@ export class ServicesStack extends cdk.Stack {
       handler: "index.handler",
       environment: {
         APPSYNC_GRAPHQL_API_ENDPOINT: gqlApi.graphqlUrl,
+        COGNITO_USERPOOL_CLIENT_ID: userPoolClient.userPoolClientId,
         STACK_REGION: this.region,
       },
     });
