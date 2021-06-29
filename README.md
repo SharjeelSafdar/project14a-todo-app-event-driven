@@ -4,12 +4,12 @@
   </a>
 </p>
 <h1 align="center">
-  Project 14A: Serverless JAMstack Todo App with Event-Driven Architechture
+  Project 14A: Serverless JAMstack Todo App with Event-Driven Architecture
 </h1>
 
 ## Link to Web App
 
-A serverless JAMstack Todo App with Gatsby, TypeScript, AppSync, DynamoDB, Lambda, Cognito, CloudFront, and EventBridge The web app has been deployed to AWS CloudFront, and can be accessed [here](https://d2181uw8zbk99u.cloudfront.net/).
+A serverless JAMstack Todo App with Gatsby, TypeScript, AppSync, DynamoDB, Lambda, Cognito, CloudFront, and EventBridge. The web app has been deployed to AWS CloudFront, and can be accessed [here](https://d2181uw8zbk99u.cloudfront.net/).
 
 ## Features
 
