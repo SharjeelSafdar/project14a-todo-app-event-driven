@@ -41,7 +41,7 @@ This AWS CDK App deploys the backend infrastructure for Project 14A. The app con
 
 ### Stack 1: AppSync GraphQL API, DynamoDB Table, EventBridge and Lambda Functions
 
-It contanis of the AWS services used by the web client. It has the following constructs:
+It contanis the AWS services used by the web client. It has the following constructs:
 
 - A DynamoDB Table to contain the todos saved by the users
 - An AppSync GraphQL API to access the todos of the logged in user from the table
