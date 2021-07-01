@@ -7,7 +7,7 @@ type Todo {
 type MutationCompletedReturnType {
   mutationType: String!
   username: String!
-  todo: String!
+  todo: Todo!
 }
 
 input TodoInput {

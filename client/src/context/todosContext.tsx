@@ -30,12 +30,7 @@ import {
   OnMutationCompletedSubscription,
   OnMutationCompletedSubscriptionVariables,
 } from "../graphql/api";
-import {
-  reducerFunc,
-  ReducerState,
-  Action,
-  parseData,
-} from "./reducerFunction";
+import { reducerFunc, ReducerState, Action } from "./reducerFunction";
 import { useAuth } from "./authContext";
 
 const reducerInitialState: ReducerState = {
@@ -171,7 +166,7 @@ export const TodosProvider: FC = ({ children }) => {
         if (status.value.data.onMutationCompleted) {
           const data = status.value.data.onMutationCompleted;
           console.log("Sub Data: ", data);
-          const todo = parseData(data);
+          const todo = data.todo;
 
           switch (data.mutationType) {
             case "createTodo":

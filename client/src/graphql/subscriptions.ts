@@ -7,7 +7,11 @@ export const onMutationCompleted = /* GraphQL */ `
     onMutationCompleted(username: $username) {
       mutationType
       username
-      todo
+      todo {
+        id
+        content
+        status
+      }
     }
   }
 `;

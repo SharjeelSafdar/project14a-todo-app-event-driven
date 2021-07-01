@@ -54,7 +54,11 @@ exports.handler = async (event, context, callback) => {
           ) {
             mutationType
             username
-            todo
+            todo {
+              id
+              content
+              status
+            }
           }
         }
       `,

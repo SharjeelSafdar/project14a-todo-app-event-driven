@@ -12,7 +12,7 @@ export type MutationCompletedReturnType = {
   __typename: "MutationCompletedReturnType",
   mutationType: string,
   username: string,
-  todo: string,
+  todo: Todo,
 };
 
 export type Todo = {
@@ -67,7 +67,12 @@ export type MutationCompletedMutation = {
     __typename: "MutationCompletedReturnType",
     mutationType: string,
     username: string,
-    todo: string,
+    todo:  {
+      __typename: "Todo",
+      id: string,
+      content: string,
+      status: boolean,
+    },
   },
 };
 
@@ -89,6 +94,11 @@ export type OnMutationCompletedSubscription = {
     __typename: "MutationCompletedReturnType",
     mutationType: string,
     username: string,
-    todo: string,
+    todo:  {
+      __typename: "Todo",
+      id: string,
+      content: string,
+      status: boolean,
+    },
   } | null,
 };

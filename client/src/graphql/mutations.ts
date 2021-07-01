@@ -35,7 +35,11 @@ export const mutationCompleted = /* GraphQL */ `
     ) {
       mutationType
       username
-      todo
+      todo {
+        id
+        content
+        status
+      }
     }
   }
 `;

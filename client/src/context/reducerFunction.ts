@@ -1,4 +1,4 @@
-import { Todo, MutationCompletedReturnType } from "../graphql/api";
+import { Todo } from "../graphql/api";
 
 export const reducerFunc = (
   state: ReducerState,
@@ -50,20 +50,6 @@ export const reducerFunc = (
       return state;
     }
   }
-};
-
-export const parseData = (data: MutationCompletedReturnType): Todo => {
-  const parsedData = data.todo
-    .slice(1, -1)
-    .split(",")
-    .map(seg => seg.split("=")[1]);
-  const todo: Todo = {
-    __typename: "Todo",
-    id: parsedData[0],
-    content: parsedData[1],
-    status: parsedData[2] === "true",
-  };
-  return todo;
 };
 
 export interface ReducerState {
