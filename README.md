@@ -49,6 +49,10 @@ It contanis the AWS services used by the web client. It has the following constr
 - An EventBridge rule to invoke this function when a mutation is performed by the client side
 - Another Lambda function to call an AppSync mutation to inform the client side about the changes in table through an AppSync subscription
 
+<p align="center">
+  <img alt="Architecture Diagram" src="./backend/P14a AWS Architecture.jpg" />
+</p>
+
 ### Stack 2: CloudFront Distribution and S3 Bucket
 
 It contains the infrastructure to deploy frontend client. It has the following constructs:
